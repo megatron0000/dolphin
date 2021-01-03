@@ -212,7 +212,7 @@ bool FramebufferManager::CreateEFBFramebuffer()
 
   // Clear the renderable textures out.
   g_renderer->SetAndClearFramebuffer(
-      m_efb_framebuffer.get(), {{0.0f, 0.0f, 0.0f, 0.0f}},
+      m_efb_framebuffer.get(), {{0.0f, 0.0f, 0.0f, 1.0f}},
       g_ActiveConfig.backend_info.bSupportsReversedDepthRange ? 1.0f : 0.0f);
   return true;
 }

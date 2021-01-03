@@ -143,35 +143,15 @@ void Renderer::ClearScreen(const MathUtil::Rectangle<int>& rc, bool color_enable
     native_rc.ClampUL(0, 0, m_current_framebuffer->GetWidth(), m_current_framebuffer->GetHeight());
     const D3D12_RECT d3d_clear_rc{native_rc.left, native_rc.top, native_rc.right, native_rc.bottom};
 
-    if (fast_color_clear)
-    {
-      static_cast<DXTexture*>(m_current_framebuffer->GetColorAttachment())
-          ->TransitionToState(D3D12_RESOURCE_STATE_RENDER_TARGET);
+    static_cast<DXTexture*>(m_current_framebuffer->GetDepthAttachment())
+        ->TransitionToState(D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-      const std::array<float, 4> clear_color = {
-          {static_cast<float>((color >> 16) & 0xFF) / 255.0f,
-           static_cast<float>((color >> 8) & 0xFF) / 255.0f,
-           static_cast<float>((color >> 0) & 0xFF) / 255.0f,
-           static_cast<float>((color >> 24) & 0xFF) / 255.0f}};
-      g_dx_context->GetCommandList()->ClearRenderTargetView(
-          static_cast<const DXFramebuffer*>(m_current_framebuffer)->GetRTVDescriptor().cpu_handle,
-          clear_color.data(), 1, &d3d_clear_rc);
-      color_enable = false;
-      alpha_enable = false;
-    }
-
-    if (z_enable)
-    {
-      static_cast<DXTexture*>(m_current_framebuffer->GetDepthAttachment())
-          ->TransitionToState(D3D12_RESOURCE_STATE_DEPTH_WRITE);
-
-      // D3D does not support reversed depth ranges.
-      const float clear_depth = 1.0f - static_cast<float>(z & 0xFFFFFF) / 16777216.0f;
-      g_dx_context->GetCommandList()->ClearDepthStencilView(
-          static_cast<const DXFramebuffer*>(m_current_framebuffer)->GetDSVDescriptor().cpu_handle,
-          D3D12_CLEAR_FLAG_DEPTH, clear_depth, 0, 1, &d3d_clear_rc);
-      z_enable = false;
-    }
+    // D3D does not support reversed depth ranges.
+    const float clear_depth = 1.0f - static_cast<float>(z & 0xFFFFFF) / 16777216.0f;
+    g_dx_context->GetCommandList()->ClearDepthStencilView(
+        static_cast<const DXFramebuffer*>(m_current_framebuffer)->GetDSVDescriptor().cpu_handle,
+        D3D12_CLEAR_FLAG_DEPTH, clear_depth, 0, 1, &d3d_clear_rc);
+    z_enable = false;
   }
 
   // Anything left over, fall back to clear triangle.
